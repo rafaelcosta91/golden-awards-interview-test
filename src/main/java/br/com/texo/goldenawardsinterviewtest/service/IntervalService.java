@@ -19,10 +19,10 @@ import br.com.texo.goldenawardsinterviewtest.repository.MovieRepository;
 @Service
 public class IntervalService {
     Logger log = LoggerFactory.getLogger(IntervalService.class);
-    
+
     @Autowired
     MovieRepository movieRepository;
-    
+
     private Integer calculateInterval(Integer firstYear, Integer lastYear) {
         return lastYear - firstYear;
     }
@@ -32,54 +32,51 @@ public class IntervalService {
         List<Movie> orderedMovies = getOrderedMovies();
         Map<Long, AwardInterval> winnerProducers = new HashMap<>();
         Integer interval = intervalType.getValue();
-        
-        for(Movie movie : orderedMovies) {
-            for(Producer producer : movie.getProducers()) {
-               if(winnerProducers.containsKey(producer.getId())) {
-                   interval = validateIntervals(intervalType, intervals, winnerProducers, interval, movie, producer,calculateInterval(winnerProducers.get(producer.getId()).getPreviousWin(), movie.getReleaseYear()));
-                   winnerProducers.get(producer.getId()).setPreviousWin(movie.getReleaseYear());
-               } else {
-                   winnerProducers.put(producer.getId(), AwardInterval.builder()
-                           .previousWin(movie.getReleaseYear())
-                           .build());
-               }
+
+        for (Movie movie : orderedMovies) {
+            for (Producer producer : movie.getProducers()) {
+                if (winnerProducers.containsKey(producer.getId())) {
+                    interval = validateIntervals(intervalType, intervals, winnerProducers, interval, movie, producer, calculateInterval(winnerProducers.get(producer.getId()).getPreviousWin(),movie.getReleaseYear()));
+                    winnerProducers.get(producer.getId()).setPreviousWin(movie.getReleaseYear());
+                } else {
+                    winnerProducers.put(producer.getId(), AwardInterval.builder()
+                            .previousWin(movie.getReleaseYear())
+                            .build());
+                }
             }
         }
         return intervals;
-        
+
     }
 
-    private Integer validateIntervals(IntervalType intervalType, List<AwardInterval> intervals,
-            Map<Long, AwardInterval> winnerProducers, Integer interval, Movie movie, Producer producer,
-            Integer intervalAux) {
-        if(intervalType.equals(IntervalType.MAX) && interval <= intervalAux) {
-               if (interval < intervalAux) {
-                   intervals.clear();
-               }
-               interval = getAndAddInterval(intervals, winnerProducers, movie, producer, intervalAux);                       
-           } else if(intervalType.equals(IntervalType.MIN) && interval >= intervalAux) {
-               if (interval > intervalAux) {
-                   intervals.clear();
-               }
-               interval = getAndAddInterval(intervals, winnerProducers, movie, producer, intervalAux);
-               
-           }
+    private Integer validateIntervals(IntervalType intervalType, List<AwardInterval> intervals,Map<Long, AwardInterval> winnerProducers, Integer interval, Movie movie, Producer producer,Integer intervalAux) {
+        if (intervalType.equals(IntervalType.MAX) && interval <= intervalAux) {
+            if (interval < intervalAux) {
+                intervals.clear();
+            }
+            interval = getAndAddInterval(intervals, winnerProducers, movie, producer, intervalAux);
+        } else if (intervalType.equals(IntervalType.MIN) && interval >= intervalAux) {
+            if (interval > intervalAux) {
+                intervals.clear();
+            }
+            interval = getAndAddInterval(intervals, winnerProducers, movie, producer, intervalAux);
+
+        }
         return interval;
     }
 
-    private Integer getAndAddInterval(List<AwardInterval> intervals, Map<Long, AwardInterval> winnerProducers,
-            Movie movie, Producer producer, Integer intervalAux) {
+    private Integer getAndAddInterval(List<AwardInterval> intervals, Map<Long, AwardInterval> winnerProducers, Movie movie, Producer producer, Integer intervalAux) {
         Integer interval;
         interval = intervalAux;
-           intervals.add(AwardInterval.builder()
-               .producer(producer.getName())
-               .previousWin(winnerProducers.get(producer.getId()).getPreviousWin())
-               .followingWin(movie.getReleaseYear())
-               .interval(interval)
-               .build());
+        intervals.add(AwardInterval.builder()
+                .producer(producer.getName())
+                .previousWin(winnerProducers.get(producer.getId()).getPreviousWin())
+                .followingWin(movie.getReleaseYear())
+                .interval(interval)
+                .build());
         return interval;
     }
-    
+
     private List<Movie> getOrderedMovies() {
         return movieRepository
                 .findAll()
